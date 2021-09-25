@@ -17,9 +17,9 @@ to this app, and everything will be happy.
 ## Building and installing
 
 You'll need the following dependencies:
-* (meson)[https://mesonbuild.com]
-* (JACK)[https://jackaudio.org/]
-* (libfmt)[https://github.com/fmtlib/fmt]
+* [meson](https://mesonbuild.com)
+* [JACK](https://jackaudio.org/)
+* [libfmt](https://github.com/fmtlib/fmt)
 
 ```
 meson setup build --prefix=<your desired install prefix>
