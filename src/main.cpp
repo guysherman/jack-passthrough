@@ -43,17 +43,23 @@ int main(int argc, char **argv) {
 }
 
 cxxopts::ParseResult parseArgs(int argc, char **argv) {
-  cxxopts::Options options(argv[0], " - example command line options");
+  cxxopts::Options options(argv[0], "jack-passthru");
   options.positional_help("[optional args]").show_positional_help();
 
   // clang-format off
   options.set_width(70).add_options()
+    ("h,help", "Print the help message")
     ("n,name", "Client name in JACK", cxxopts::value<std::string>()->default_value(CLIENT_NAME_DEFAULT_VALUE))
     ("p,ports", "Number of in/out pairs to open", cxxopts::value<uint32_t>()->default_value(NUM_PORTS_DEFAULT_VALUE))
   ;
   // clang-format on
+  auto parsedOptions = options.parse(argc, argv);
 
-  return options.parse(argc, argv);
+  if (parsedOptions.count("help")) {
+    std::cout << options.help({""}) << std::endl;
+    exit(0);
+  }
+  return parsedOptions;
 }
 
 jack_client_t *initJack(std::string clientName, PortMap &ports) {
