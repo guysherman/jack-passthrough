@@ -6,6 +6,8 @@
 #include <utility>
 #include <vector>
 
+#include "cxxopts.hpp"
+
 int process(jack_nframes_t nframes, void *arg);
 void shutdown(void *arg);
 
@@ -13,11 +15,26 @@ jack_client_t *client = nullptr;
 std::vector<std::pair<jack_port_t *, jack_port_t *>> ports;
 uint32_t sampleRate = 0;
 
-uint32_t NUM_PORTS = 16;
+#define NUM_PORTS_DEFAULT_VALUE "16"
+#define CLIENT_NAME_DEFAULT_VALUE "jack-passthru"
 
 int main(int argc, char **argv) {
+  cxxopts::Options options(argv[0], " - example command line options");
+  options.positional_help("[optional args]").show_positional_help();
+
+  options.set_width(70).add_options()(
+      "n,name", "Client name in JACK",
+      cxxopts::value<std::string>()->default_value(CLIENT_NAME_DEFAULT_VALUE))(
+      "p,ports", "Number of in/out pairs to open",
+      cxxopts::value<uint32_t>()->default_value(NUM_PORTS_DEFAULT_VALUE));
+
+  auto result = options.parse(argc, argv);
+
+  std::string clientName = result["n"].as<std::string>();
+  uint32_t numPorts = result["p"].as<uint32_t>();
+
   jack_status_t status;
-  client = jack_client_open("jack-passthru", JackNoStartServer, &status);
+  client = jack_client_open(clientName.c_str(), JackNoStartServer, &status);
 
   if (client == nullptr) {
     std::cout << "jack_client_open failed";
@@ -30,7 +47,7 @@ int main(int argc, char **argv) {
   jack_set_process_callback(client, process, 0);
   jack_on_shutdown(client, shutdown, 0);
 
-  for (uint32_t i = 0; i < NUM_PORTS; ++i) {
+  for (uint32_t i = 0; i < numPorts; ++i) {
     std::string inputPortname = fmt::format("input_{}", i);
     jack_port_t *input =
         jack_port_register(client, inputPortname.c_str(),
