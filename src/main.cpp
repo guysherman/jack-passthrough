@@ -3,6 +3,7 @@
 
 #include <cstring>
 #include <iostream>
+#include <unistd.h>
 #include <utility>
 #include <vector>
 
@@ -36,8 +37,8 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-  std::cout << "Press any key to continue..." << std::endl;
-  std::cin.ignore();
+  std::cout << "Press ctrl+c to terminate." << std::endl;
+  sleep(-1);
   return 0;
 }
 
