@@ -1,15 +1,19 @@
+#include <fmt/format.h>
 #include <jack/jack.h>
 
 #include <cstring>
 #include <iostream>
+#include <utility>
+#include <vector>
 
 int process(jack_nframes_t nframes, void *arg);
 void shutdown(void *arg);
 
 jack_client_t *client = nullptr;
-jack_port_t *input = nullptr;
-jack_port_t *output = nullptr;
+std::vector<std::pair<jack_port_t *, jack_port_t *>> ports;
 uint32_t sampleRate = 0;
+
+uint32_t NUM_PORTS = 16;
 
 int main(int argc, char **argv) {
   jack_status_t status;
@@ -26,10 +30,19 @@ int main(int argc, char **argv) {
   jack_set_process_callback(client, process, 0);
   jack_on_shutdown(client, shutdown, 0);
 
-  input = jack_port_register(client, "input", JACK_DEFAULT_AUDIO_TYPE,
-                             JackPortIsInput, 0);
-  output = jack_port_register(client, "output", JACK_DEFAULT_AUDIO_TYPE,
-                              JackPortIsOutput, 0);
+  for (uint32_t i = 0; i < NUM_PORTS; ++i) {
+    std::string inputPortname = fmt::format("input_{}", i);
+    jack_port_t *input =
+        jack_port_register(client, inputPortname.c_str(),
+                           JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
+
+    std::string outputPortname = fmt::format("output_{}", i);
+    jack_port_t *output =
+        jack_port_register(client, outputPortname.c_str(),
+                           JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+
+    ports.push_back(std::make_pair(input, output));
+  }
 
   // probably do some error handling here
 
@@ -46,10 +59,15 @@ int main(int argc, char **argv) {
 int process(jack_nframes_t nframes, void *arg) {
   jack_default_audio_sample_t *in, *out;
 
-  in = (jack_default_audio_sample_t *)jack_port_get_buffer(input, nframes);
-  out = (jack_default_audio_sample_t *)jack_port_get_buffer(output, nframes);
+  std::vector<std::pair<jack_port_t *, jack_port_t *>>::iterator it;
+  for (it = ports.begin(); it != ports.end(); it++) {
+    in =
+        (jack_default_audio_sample_t *)jack_port_get_buffer(it->first, nframes);
+    out = (jack_default_audio_sample_t *)jack_port_get_buffer(it->second,
+                                                              nframes);
+    memcpy(out, in, sizeof(jack_default_audio_sample_t) * nframes);
+  }
 
-  memcpy(out, in, sizeof(jack_default_audio_sample_t) * nframes);
   return 0;
 }
 
