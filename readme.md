@@ -14,14 +14,18 @@ present a client with a given number of ports, that a given app can
 always connect its ports to, and Ardour will also remember the connections 
 to this app, and everything will be happy.
 
-## Building
+## Building and installing
 
-You'll need (meson)[https://mesonbuild.com], and (JACK)[https://jackaudio.org/].
+You'll need the following dependencies:
+* (meson)[https://mesonbuild.com]
+* (JACK)[https://jackaudio.org/]
+* (libfmt)[https://github.com/fmtlib/fmt]
 
 ```
-meson setup build
+meson setup build --prefix=<your desired install prefix>
 cd build
 ninja
+meson install
 ```
 
 That's it.
