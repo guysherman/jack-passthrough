@@ -37,8 +37,21 @@ int main(int argc, char **argv) {
   client = jack_client_open(clientName.c_str(), JackNoStartServer, &status);
 
   if (client == nullptr) {
-    std::cout << "jack_client_open failed";
+    std::cout << fmt::format("jack_client_open failed: status {0:#x}", status)
+              << std::endl;
+    if (status & JackServerFailed) {
+      std::cout << fmt::format("Unable to connect to JACK server") << std::endl;
+    }
     return -1;
+  }
+
+  if (status & JackServerStarted) {
+    std::cout << "Jack Server Started";
+  }
+
+  if (status & JackNameNotUnique) {
+    clientName = std::string(jack_get_client_name(client));
+    std::cout << fmt::format("Unique name: {} assigned.", clientName);
   }
 
   sampleRate = jack_get_sample_rate(client);
@@ -57,6 +70,11 @@ int main(int argc, char **argv) {
     jack_port_t *output =
         jack_port_register(client, outputPortname.c_str(),
                            JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+
+    if (input == nullptr || output == nullptr) {
+      std::cout << "No more JACK ports available";
+      return -1;
+    }
 
     ports.push_back(std::make_pair(input, output));
   }
