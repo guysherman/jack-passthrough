@@ -119,7 +119,10 @@ int process(jack_nframes_t nframes, void *arg) {
   for (it = ports.begin(); it != ports.end(); it++) {
     in = (jack_default_audio_sample_t *)jack_port_get_buffer(it->first, nframes);
     out = (jack_default_audio_sample_t *)jack_port_get_buffer(it->second, nframes);
-    memcpy(out, in, sizeof(jack_default_audio_sample_t) * nframes);
+
+    if (in != out) {
+      memcpy(out, in, sizeof(jack_default_audio_sample_t) * nframes);
+    }
   }
 
   return 0;
